@@ -1,0 +1,61 @@
+# ==========================================================
+#  AntWars - arenes
+# ==========================================================
+# Ce fichier est genere et reecrit par le plugin.
+# Ne pas l'editer pendant que le serveur tourne.
+#
+# Creation d'une arene, en jeu :
+#   /aw create <nom>
+#   /aw setarenalobby <nom>            (place-toi ou tu veux le lobby d'attente)
+#   /aw setspawn <nom> Rouge           (idem pour Bleu, Jaune, Vert)
+#   /aw setbed <nom> Rouge             (pose un vrai lit, place-toi dessus, puis
+#                                        lance la commande ; idem par equipe)
+#   /aw setteams <nom> 2               (2 a 4 equipes)
+#   /aw setplayersperteam <nom> 2
+#   /aw setminplayers <nom> 2
+#   /aw setmaxplayers <nom> 4
+#   /aw save <nom>                     (verifie et confirme l'arene)
+#
+# Le lit de chaque equipe est pose d'avance sur la map : il est restaure a son
+# emplacement au debut de chaque partie, jamais remis en main a un joueur. Un
+# coequipier peut le casser pour le demenager ; un adversaire ne le detruit qu'a
+# la TNT.
+#
+# Structure generee pour chaque arene :
+#
+# arenes:
+#   mon_arene:
+#     nom: mon_arene
+#     minPlayers: 2
+#     maxPlayers: 8
+#     teamCount: 2
+#     playersPerTeam: 4
+#     lobby:
+#       world: world
+#       x: 0.0
+#       y: 64.0
+#       z: 0.0
+#       yaw: 0.0
+#       pitch: 0.0
+#     spawnPoints:
+#       Rouge:
+#         world: world
+#         x: 50.0
+#         y: 30.0
+#         z: 0.0
+#         yaw: 0.0
+#         pitch: 0.0
+#     beds:
+#       Rouge:
+#         foot:
+#           world: world
+#           x: 52.0
+#           y: 30.0
+#           z: 0.0
+#         head:
+#           world: world
+#           x: 52.0
+#           y: 30.0
+#           z: 1.0
+
+arenes: {}

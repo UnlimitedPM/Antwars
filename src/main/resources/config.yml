@@ -1,0 +1,292 @@
+# ==========================================================
+#  AntWars - configuration generale
+# ==========================================================
+
+# Langue des messages joueur, pour tout le serveur :
+#   fr (francais), en (anglais), es (espagnol), it (italien), de (allemand), pt (portugais).
+# Les textes sont editables dans le dossier lang/ (un fichier par langue).
+language: fr
+
+# Lobby principal du serveur, ou les joueurs sont renvoyes en fin de partie.
+# Se definit en jeu avec /aw setlobby (ne pas editer a la main).
+server-lobby:
+  world: ''
+  x: 0.0
+  y: 0.0
+  z: 0.0
+  yaw: 0.0
+  pitch: 0.0
+
+# Teleporter les joueurs au lobby principal a leur connexion.
+# A mettre sur false si le serveur ne fait pas QUE de l'AntWars.
+lobby-on-join: true
+
+# Compatibilite proxy (BungeeCord / Waterfall / Velocity). Prise en compte au
+# demarrage (redemarre apres avoir change ces valeurs).
+#   enabled: true    -> en fin de partie et sur /aw leave, le joueur est renvoye
+#                       vers le serveur hub ci-dessous, au lieu du lobby local.
+#   fallback-server  -> nom du serveur tel qu'il est declare dans la config du
+#                       proxy (bungeecord config.yml / velocity.toml).
+#
+# A faire cote serveur (pas ici), sinon les stats seront fausses :
+#   - active le forwarding : spigot.yml "bungeecord: true", ou le modern
+#     forwarding de Velocity -> les UUID des joueurs arrivent corrects.
+#   - pour des stats communes a tout le reseau, mets storage.type: mysql.
+bungeecord:
+  enabled: false
+  fallback-server: lobby
+
+# Mode arene (reseau facon "1 serveur = 1 partie"). Quand enabled: true, tout
+# joueur qui se connecte est mis directement dans l'arene ci-dessous, sans passer
+# par /aw join. Si une partie y est deja en cours (ou l'arene pleine), le joueur
+# est renvoye vers le hub (necessite bungeecord.enabled). Les joueurs avec la
+# permission antwars.arenamode.bypass (op par defaut) ne sont PAS auto-rejoints,
+# pour pouvoir configurer/observer le serveur. Prise en compte au demarrage.
+arena-mode:
+  enabled: false
+  arena: ''
+
+# NPC de boutique : pose avec /aw shopnpc <arene> (ou par le menu de config), il
+# ouvre la boutique comme la pancarte [Boutique].
+#
+# type :
+#   auto        -> vrai NPC joueur si le plugin Citizens est installe, sinon
+#                  armor stand (recommande)
+#   citizens    -> comme auto, mais previent dans la console si Citizens manque
+#   armorstand  -> toujours l'armor stand, meme si Citizens est present
+# Un "vrai" NPC joueur n'existe dans aucune API Bukkit : il faut des paquets
+# reseau propres a chaque version (1.8 -> 1.21), ce que le projet s'interdit
+# (regle 3). Citizens fait ce travail ; AntWars ne fait que lui parler, et n'en
+# depend pas (aucune ligne de Citizens dans le jar).
+#
+# skin : peau de la tete
+#   ''                     -> tete par defaut (Steve)
+#   un pseudo Minecraft    -> la peau de ce joueur (fonctionne dans les deux modes)
+#   une texture base64     -> peau custom sans acces reseau (armor stand uniquement :
+#                             Citizens ne prend qu'un pseudo)
+shop-npc:
+  type: auto
+  skin: 'xLaugh'
+
+# Stockage des statistiques (parties, victoires, defaites, kills, morts).
+#   type: local  -> fichier stats.yml, aucune dependance (recommande pour un serveur seul)
+#   type: mysql  -> base MySQL/MariaDB (pilote embarque dans le jar), pour partager
+#                   les stats entre plusieurs serveurs ou avec un site web
+# Le changement de type prend effet au demarrage (ou /aw reload... redemarre plutot,
+# le rechargement ne rebranche pas le stockage).
+storage:
+  type: local
+  mysql:
+    host: localhost
+    port: 3306
+    database: antwars
+    user: root
+    password: ''
+    table: antwars_stats
+
+# Duree du compte a rebours avant le lancement d'une partie (secondes).
+countdown: 30
+
+# Duree AVANT l'apparition des bordures (le deathmatch), en secondes. C'est la
+# valeur PAR DEFAUT des nouvelles arenes ; chaque arene peut l'overrider dans le
+# menu de configuration (bouton "Temps des bordures"). 1200 = 20 minutes.
+game-duration: 1200
+
+# Reconnexion en cours de partie. Un joueur encore en vie qui se deconnecte
+# (crash, coupure) garde sa place TANT QUE LE LIT DE SON EQUIPE EXISTE : il la
+# retrouve automatiquement en se reconnectant, avec son equipement, sa vie et son
+# XP, a cote de son lit (ou au point d'apparition de l'equipe s'il n'y est pas
+# lie). Lit detruit = place perdue definitivement. Pas de delai : c'est le lit
+# qui decide.
+#   enabled : false = toute deconnexion fait quitter la partie definitivement
+reconnection:
+  enabled: true
+
+# Protection de reapparition : secondes pendant lesquelles un joueur qui vient
+# d'apparaitre (lancement, retour a son lit apres une mort, reconnexion) ne subit
+# aucun degat. Elle s'arrete des qu'il frappe quelqu'un. 0 = desactivee.
+respawn-protection: 3
+
+# Secondes entre la fin de la partie (resume, feux d'artifice) et le renvoi des
+# joueurs au lobby.
+end-delay: 5
+
+# L'armure en cuir vendue en boutique est teinte a la couleur de l'equipe de
+# l'acheteur, pour reconnaitre les equipes d'un coup d'oeil. Aucune armure n'est
+# donnee gratuitement. false = le cuir garde sa couleur d'origine.
+team-armor: true
+
+# Spectateurs : un joueur peut regarder une partie en cours avec
+# /aw spectate <arene>, sans y participer (ni equipe, ni stats). Il vole, est
+# invisible et ne peut rien toucher. Chaque arene doit l'autoriser (bouton du
+# menu d'edition, ou /aw spectators <arene> on) : desactive par defaut, a
+# activer pour les arenes d'evenement. Les joueurs elimines pendant la partie
+# gardent le mode spectateur de Minecraft, ce reglage ne les concerne pas.
+#   enabled       : false = aucun spectateur nulle part
+#   max-per-arena : nombre maximal de spectateurs par arene
+# Permission : antwars.spectate (donnee a tous par defaut).
+spectator:
+  enabled: true
+  max-per-arena: 5
+
+# Chat des parties. Pendant une partie, un message normal n'est lu que par
+# l'equipe de l'auteur ; un message qui commence par all-prefix est lu par tout
+# le monde. Avant le lancement et a l'ecran de fin, le chat est general a
+# l'arene. Une etiquette de couleur est ajoutee devant le message (textes :
+# chat.* du fichier de langue). /aw chat all|team change le chat par defaut d'un
+# joueur.
+#   enabled    : false = le plugin ne touche pas au chat
+#   scope      : qui est "tout le monde" pour un message a tous
+#                  arena = les joueurs et spectateurs de la partie (les joueurs
+#                          en partie ne recoivent plus le chat du hub, et
+#                          inversement)
+#                  world = les joueurs du monde de l'auteur
+#   all-prefix : debut de message pour parler a tout le monde
+chat:
+  enabled: true
+  scope: arena
+  all-prefix: "!"
+
+# Regeneration de la map : a la fin de chaque partie, le terrain modifie pendant
+# la manche (blocs mines, poses, detruits a la TNT, eau versee) est remis a son
+# etat d'origine. Les lits ne sont pas concernes (geres a part). Mettre a false
+# pour laisser la map en l'etat entre deux parties (ancien comportement).
+map-regeneration: true
+
+# Bordure du monde appliquee au deathmatch.
+border:
+  # Taille initiale en blocs.
+  start-size: 100
+  # Taille finale en blocs.
+  end-size: 20
+  # Duree du retrecissement, en secondes.
+  shrink-time: 60
+
+# Boutique : chaque article est libre (ajoute, retire, deplace, change le prix).
+#   material : nom du materiau (moderne OU avant la 1.13 : WOODEN_SWORD / WOOD_SWORD,
+#              END_STONE / ENDER_STONE... XSeries convertit tout seul)
+#   category : WEAPONS | TOOLS | ARMOR | FOOD | MISC   (l'onglet ou il apparait)
+#   slot     : position dans l'onglet, 0 a 20 (grille de 3 rangees de 7 ; 0 = haut
+#              gauche, +1 vers la droite, puis rangee suivante)
+#   price    : prix en blocs de terre (0 = article retire de la vente)
+#   amount   : quantite donnee par achat (defaut 1)
+#   quick    : true pour l'afficher aussi dans l'onglet Achat rapide
+#   name     : (optionnel) nom personnalise avec couleurs & ; sinon nom traduit
+# Ajouter un article : recopie une ligne et change les valeurs. Exemple :
+#   golden_sword: { material: GOLDEN_SWORD, category: WEAPONS, slot: 9, price: 200, name: "&6Epee legendaire" }
+shop:
+  # -- Armes --
+  wooden_sword: { material: WOODEN_SWORD, category: WEAPONS, slot: 0, price: 20, quick: true }
+  stone_sword: { material: STONE_SWORD, category: WEAPONS, slot: 1, price: 35, quick: true }
+  iron_sword: { material: IRON_SWORD, category: WEAPONS, slot: 2, price: 128, quick: true }
+  bow: { material: BOW, category: WEAPONS, slot: 7, price: 20 }
+  arrow: { material: ARROW, category: WEAPONS, slot: 8, price: 4 }
+  # -- Outils --
+  wooden_shovel: { material: WOODEN_SHOVEL, category: TOOLS, slot: 0, price: 10, quick: true }
+  stone_shovel: { material: STONE_SHOVEL, category: TOOLS, slot: 1, price: 45, quick: true }
+  iron_shovel: { material: IRON_SHOVEL, category: TOOLS, slot: 2, price: 64 }
+  # -- Armures : cuir sur la 1re rangee, maille sur la 2e (equipees automatiquement) --
+  leather_helmet: { material: LEATHER_HELMET, category: ARMOR, slot: 0, price: 10 }
+  leather_chestplate: { material: LEATHER_CHESTPLATE, category: ARMOR, slot: 1, price: 15 }
+  leather_leggings: { material: LEATHER_LEGGINGS, category: ARMOR, slot: 2, price: 10 }
+  leather_boots: { material: LEATHER_BOOTS, category: ARMOR, slot: 3, price: 10 }
+  chainmail_helmet: { material: CHAINMAIL_HELMET, category: ARMOR, slot: 7, price: 30 }
+  chainmail_chestplate: { material: CHAINMAIL_CHESTPLATE, category: ARMOR, slot: 8, price: 35 }
+  chainmail_leggings: { material: CHAINMAIL_LEGGINGS, category: ARMOR, slot: 9, price: 30 }
+  chainmail_boots: { material: CHAINMAIL_BOOTS, category: ARMOR, slot: 10, price: 30 }
+  # -- Nourritures --
+  cooked_beef: { material: COOKED_BEEF, category: FOOD, slot: 0, price: 5, quick: true }
+  golden_apple: { material: GOLDEN_APPLE, category: FOOD, slot: 1, price: 15, quick: true }
+  # -- Divers --
+  tnt: { material: TNT, category: MISC, slot: 0, price: 25, quick: true }
+  flint_and_steel: { material: FLINT_AND_STEEL, category: MISC, slot: 1, price: 15, quick: true }
+  end_stone: { material: END_STONE, category: MISC, slot: 2, price: 10, quick: true }
+  chest: { material: CHEST, category: MISC, slot: 3, price: 55, quick: true }
+  torch: { material: TORCH, category: MISC, slot: 4, price: 1, quick: true }
+  water_bucket: { material: WATER_BUCKET, category: MISC, slot: 5, price: 30 }
+
+# Potions : l'effet est code (non ajoutable librement), on ne regle que le prix,
+# l'onglet et l'emplacement. Effet et duree sont vanilla, geres differemment selon
+# la version (1.8 : valeur de data ; 1.9+ : PotionMeta). Splash degats = splash
+# potion of harming. Prix a 0 = potion retiree de la vente.
+potions:
+  HARMING_I: { category: MISC, slot: 7, price: 64 }
+  HARMING_II: { category: MISC, slot: 8, price: 128 }
+  REGEN_I: { category: MISC, slot: 9, price: 64 }
+  REGEN_II: { category: MISC, slot: 10, price: 128 }
+  POISON: { category: MISC, slot: 11, price: 64 }
+  WEAKNESS: { category: MISC, slot: 12, price: 64 }
+
+
+# Annonce de fin de partie sur un webhook Discord : qui a gagne, sur quelle
+# arene, combien de joueurs. Requete HTTP toute simple, sans dependance ajoutee.
+#   enabled     -> true pour activer
+#   webhook-url -> URL du webhook (salon Discord > Parametres > Integrations >
+#                  Webhooks > Nouveau webhook > Copier l'URL)
+discord:
+  enabled: false
+  webhook-url: ''
+
+# Scoreboard lateral facon BedWars, affiche pendant la partie, entierement
+# personnalisable.
+#   footer : texte de la ligne speciale {footer} (ex. l'IP du serveur).
+#            Vide = ligne masquee.
+#   title  : titre. Vide = celui du fichier de langue.
+#   lines  : les lignes, de haut en bas (15 au maximum). Vide = mise en page
+#            par defaut du fichier de langue (lang/<code>.yml, scoreboard.lines).
+#            Ajoute, retire ou deplace les lignes comme tu veux ; couleurs avec &.
+#
+# Dans une ligne (et dans le titre) :
+#   - Placeholders d'AntWars, qui marchent MEME SANS PlaceholderAPI :
+#       %antwars_arena%        nom de l'arene
+#       %antwars_date%         date du jour (jj/mm/aa)
+#       %antwars_time%         temps restant avant les bordures (M:SS)
+#       %antwars_team%         equipe du joueur ; %antwars_team_color% en couleur
+#       %antwars_players%      joueurs dans l'arene ; %antwars_maxplayers% le maximum
+#       %antwars_game_kills%   kills du joueur dans cette partie
+#       %antwars_game_deaths%  morts du joueur dans cette partie
+#       %antwars_game_beds%    lits detruits par le joueur dans cette partie
+#       %antwars_kills% %antwars_deaths% %antwars_wins% %antwars_losses%
+#       %antwars_games% %antwars_rating% %antwars_kd%
+#                              statistiques de carriere
+#       %antwars_quests_done% %antwars_quests_total% et
+#       %antwars_quest_win_games% %antwars_quest_get_kills% %antwars_quest_destroy_beds%
+#                              quetes du jour (progression "x/y")
+#   - Placeholders de N'IMPORTE QUEL autre plugin, si PlaceholderAPI est installe :
+#       %player_name%, %luckperms_prefix%, %vault_eco_balance%...
+#   - Lignes speciales, seules sur leur ligne :
+#       {teams}   une ligne par equipe avec son statut (format : lang, scoreboard.team_line)
+#       {timer}   compte a rebours des bordures, ou "Bordures actives"
+#       {footer}  le texte "footer" ci-dessus (ligne masquee s'il est vide)
+#
+# Longueur d'une ligne : 32 caracteres (codes couleur compris) en 1.8-1.12,
+# 128 a partir de la 1.13 ; au-dela, le texte est coupe.
+# Note : sans NMS, les petits numeros rouges a droite restent visibles avant la 1.20.5.
+#
+# Exemple (a mettre a la place de "lines: []") :
+#   title: "&6&lANT WARS"
+#   lines:
+#     - "&7%antwars_date% &8%antwars_arena%"
+#     - ""
+#     - "{timer}"
+#     - ""
+#     - "{teams}"
+#     - ""
+#     - "&fKills : &a%antwars_game_kills%"
+#     - "&fLits : &a%antwars_game_beds%"
+#     - "&fGrade : %luckperms_prefix%"
+#     - ""
+#     - "{footer}"
+scoreboard:
+  enabled: true
+  footer: "laugh.yt"
+  title: ""
+  lines: []
+
+# Quetes du jour (/aw quests) : trois objectifs fixes qui se reinitialisent
+# chaque jour (gagner des parties, faire des kills, detruire un lit).
+#   enabled -> false pour desactiver entierement : plus de suivi de
+#              progression, plus de message "quete accomplie", et /aw quests
+#              repond que les quetes sont desactivees.
+quests:
+  enabled: true

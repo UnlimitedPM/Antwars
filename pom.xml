@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>fr.laugh</groupId>
+    <artifactId>AntWars</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>AntWars</name>
+    <description>Rush souterrain facon BedWars, compatible Minecraft 1.8 a 1.21</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!--
+            release 8 = bytecode Java 8 (version 52).
+            Un tel jar s'execute sur TOUTES les JVM de 8 a 25, donc sur tous les
+            serveurs : 1.8-1.16.5 (Java 8), 1.17 (16), 1.18-1.20.4 (17), 1.20.5+ (21).
+            Consequence : interdiction d'utiliser var, records, text blocks,
+            switch expressions ou toute syntaxe posterieure a Java 8.
+        -->
+        <maven.compiler.release>8</maven.compiler.release>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>spigotmc-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+        </repository>
+        <repository>
+            <id>sonatype</id>
+            <url>https://oss.sonatype.org/content/groups/public/</url>
+        </repository>
+        <repository>
+            <id>placeholderapi</id>
+            <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!--
+            On compile contre l'API 1.8.8, le plus petit denominateur commun.
+            Tout ce qui compile ici existe aussi en 1.21 (l'API Bukkit est
+            tres stable en ajout). L'inverse serait faux : compiler contre
+            1.21 laisserait passer des appels absents en 1.8.
+            scope provided = fourni par le serveur, jamais embarque dans le jar.
+        -->
+        <dependency>
+            <groupId>org.spigotmc</groupId>
+            <artifactId>spigot-api</artifactId>
+            <version>1.8.8-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+            <exclusions>
+                <!--
+                    bungeecord-chat 1.8-SNAPSHOT n'existe plus sur aucun depot :
+                    c'est un instantane publie en 2016 puis efface. Sans cette
+                    exclusion, le build echoue sur une dependance fantome.
+                    On perd l'API net.md_5.bungee.api.chat (les composants de
+                    chat cliquables), que le plugin n'utilise pas. Si un jour
+                    tu en as besoin, ajoute une version qui existe encore,
+                    par exemple net.md-5:bungeecord-chat:1.16-R0.4.
+                -->
+                <exclusion>
+                    <groupId>net.md-5</groupId>
+                    <artifactId>bungeecord-chat</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!--
+            XSeries : couche de compatibilite 1.8 -> 1.21 (XMaterial, XSound,
+            XPotion, XItemStack...). Embarquee dans le jar et relocalisee par
+            le shade-plugin plus bas pour eviter tout conflit avec un autre
+            plugin qui embarquerait la meme lib.
+        -->
+        <dependency>
+            <groupId>com.github.cryptomorin</groupId>
+            <artifactId>XSeries</artifactId>
+            <version>9.10.0</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!--
+            Pilote MySQL/MariaDB embarque pour le stockage des stats en base.
+            Ligne 2.7.x volontairement : elle est compilee en bytecode Java 8,
+            indispensable pour tourner sur un serveur 1.8-1.16 (Java 8). Une
+            version 3.x exigerait une JVM plus recente et casserait sur ces
+            serveurs. Relocalisee plus bas comme XSeries. Charge uniquement
+            quand storage.type = mysql, donc invisible pour un serveur local.
+        -->
+        <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <version>2.7.12</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!--
+            PlaceholderAPI : uniquement pour compiler l'expansion des
+            placeholders %antwars_...%. scope provided = fourni par le serveur,
+            jamais embarque. L'expansion (classe fr.laugh.antwars.api.Placeholders)
+            n'est chargee qu'a l'execution si le plugin PlaceholderAPI est present,
+            donc AntWars fonctionne aussi sans lui.
+        -->
+        <dependency>
+            <groupId>me.clip</groupId>
+            <artifactId>placeholderapi</artifactId>
+            <version>2.11.6</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <defaultGoal>clean package</defaultGoal>
+        <finalName>${project.name}-${project.version}</finalName>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <!-- permet d'ecrire ${project.version} dans plugin.yml -->
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                    <compilerArgs>
+                        <arg>-Xlint:-options</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <!--
+                                minimizeJar reste a false volontairement : il
+                                supprime les classes qu'aucun appel direct ne
+                                designe, or XSeries en resout une partie
+                                dynamiquement. Le gain de taille ne vaut pas le
+                                risque d'un NoClassDefFoundError en pleine
+                                partie, sur une version precise seulement.
+                            -->
+                            <minimizeJar>false</minimizeJar>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.cryptomorin.xseries</pattern>
+                                    <shadedPattern>fr.laugh.antwars.libs.xseries</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.mariadb.jdbc</pattern>
+                                    <shadedPattern>fr.laugh.antwars.libs.mariadb</shadedPattern>
+                                </relocation>
+                            </relocations>
+                            <!--
+                                Reecrit les fichiers META-INF/services du pilote
+                                (ServiceLoader interne + java.sql.Driver) vers le
+                                package relocalise, sinon le pilote ne retrouve
+                                pas ses propres composants.
+                            -->
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>module-info.class</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

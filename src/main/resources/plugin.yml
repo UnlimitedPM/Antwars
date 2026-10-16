@@ -1,0 +1,45 @@
+name: AntWars
+version: ${project.version}
+main: fr.laugh.antwars.Main
+author: xLaugh
+description: Un plugin AntWars pour des combats d'arene sous la terre.
+
+# Optionnel, jamais obligatoire : AntWars fonctionne sans aucun des deux.
+#   Gestionnaires de mondes (Multiverse...) -> charges AVANT nous, pour que les
+#                     mondes des arenes existent deja quand arenes.yml est lu ;
+#                     un monde charge quand meme apres est repris par WorldListeners.
+#   PlaceholderAPI -> enregistre les placeholders %antwars_...%
+#   Citizens       -> le NPC de boutique devient un vrai NPC joueur skinne
+#                     (sinon : armor stand). Doit etre charge AVANT nous, d'ou
+#                     ce softdepend : sinon son registre serait vide a l'init.
+softdepend: [PlaceholderAPI, Citizens, Multiverse-Core, MultiWorld, MyWorlds, Hyperverse]
+
+# api-version : les serveurs 1.8 a 1.12 ignorent purement et simplement cette
+# cle ; les serveurs 1.13+ l'exigent pour sortir du "legacy mode".
+# La valeur 1.13 est donc la seule qui soit sure de 1.8 jusqu'a 1.21.
+# (L'ancienne valeur "1.8" etait invalide : les serveurs modernes refusaient
+#  le plugin avec "Unsupported API version 1.8".)
+api-version: 1.13
+
+commands:
+  aw:
+    description: Commande principale du plugin AntWars.
+    usage: /<command> <sous-commande> [arguments]
+    aliases: [antwars]
+    # Volontairement AUCUNE permission ici : la commande doit rester
+    # accessible aux joueurs pour /aw join et /aw leave. Les sous-commandes
+    # d'administration verifient antwars.admin une par une.
+
+permissions:
+  antwars.admin:
+    description: Acces aux commandes d'administration des arenes.
+    default: op
+  antwars.join:
+    description: Permet de rejoindre une arene.
+    default: true
+  antwars.spectate:
+    description: Permet de regarder une partie en cours (/aw spectate).
+    default: true
+  antwars.arenamode.bypass:
+    description: N'est pas auto-rejoint quand le serveur est en mode arene.
+    default: op
