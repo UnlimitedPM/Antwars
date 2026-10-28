@@ -129,9 +129,8 @@ public class BedListeners implements Listener {
         // On annule l'evenement et on retire les blocs a la main : sans cela
         // Minecraft ferait tomber un lit au sol en plus de celui que l'on rend
         // au joueur, qui se retrouverait avec deux lits posables.
-        // (setDropItems(false) reglerait le probleme, mais n'existe qu'a
-        //  partir de la 1.12 : inutilisable ici.)
         event.setCancelled(true);
+        disableVanillaDrops(event);
         clearBed(arena, bedTeam);
         arena.getBeds().pickUp(bedTeam, player);
         player.getInventory().addItem(Beds.bedOf(bedTeam).item());
@@ -266,11 +265,28 @@ public class BedListeners implements Listener {
         return null;
     }
 
+    /**
+     * Desactive les drops vanilla quand l'API le permet (1.12+). En 1.8, le
+     * simple {@code setCancelled(true)} suffit deja ; la methode est appelee par
+     * reflexion pour ne pas casser la compilation contre l'API 1.8.8.
+     */
+    private void disableVanillaDrops(BlockBreakEvent event) {
+        try {
+            BlockBreakEvent.class.getMethod("setDropItems", boolean.class)
+                    .invoke(event, Boolean.FALSE);
+        } catch (Throwable ignored) {
+            // 1.8-1.11 : pas de setDropItems, l'annulation de l'evenement suffit.
+        }
+    }
+
     private void clearBed(Arena arena, String team) {
         for (Location location : arena.getBeds().blocksOf(team)) {
             Block block = location.getBlock();
             if (Beds.isBed(block.getType())) {
-                block.setType(Material.AIR);
+                // Physique desactivee : sinon la premiere moitie retiree casse
+                // la seconde par mise a jour de voisin, qui tombe alors en item
+                // en plus de celui rendu au joueur (duplication du lit).
+                block.setType(Material.AIR, false);
             }
         }
     }

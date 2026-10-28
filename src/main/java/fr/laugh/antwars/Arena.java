@@ -85,6 +85,15 @@ public class Arena {
     // Temps avant l'apparition des bordures (deathmatch), en secondes, propre a
     // chaque arene. Defaut 1200 (20 min) ; overridable via le menu de config.
     private int borderTime = 1200;
+    /**
+     * Centre de la bordure de deathmatch. {@code null} = centre du lobby.
+     *
+     * <p>Un lobby peut etre loin de l'arene (salle d'attente, hub local) : sans
+     * ce reglage, la bordure se centrerait sur le lobby et laisserait les
+     * joueurs hors de la zone de jeu. Les arenes de la map fournie ont un
+     * lobby commun et un centre de bordure propre.
+     */
+    private Location borderCenter;
     private Location lobby;
     // Spectateurs exterieurs autorises sur cette arene (/aw spectate), eteint par
     // defaut : a activer pour les arenes d'evenement.
@@ -206,6 +215,14 @@ public class Arena {
 
     public void setBorderTime(int seconds) {
         this.borderTime = Math.max(10, seconds);
+    }
+
+    public Location getBorderCenter() {
+        return borderCenter;
+    }
+
+    public void setBorderCenter(Location borderCenter) {
+        this.borderCenter = borderCenter;
     }
 
     /**
@@ -530,6 +547,13 @@ public class Arena {
             return Messages.tr("arena.join.misconfigured", "problem", problem);
         }
 
+        // Premier joueur de la file : on remet la map a neuf avant l'attente.
+        // Le suivi est vide apres un reset normal ; il ne contient quelque
+        // chose que si une manche precedente a ete interrompue (crash, /reload).
+        if (main.isMapRegenerationEnabled() && players.isEmpty()) {
+            mapTracker.restore();
+        }
+
         players.add(player.getUniqueId());
         Compat.resetPlayer(player, GameMode.ADVENTURE);
         player.teleport(lobby);
@@ -680,6 +704,22 @@ public class Arena {
             leave(player, false);
             return;
         }
+
+        // Duel 1v1 : pas de reconnexion possible, le joueur encore present
+        // gagne immediatement. On le fait avant de sauvegarder son etat, sinon
+        // la partie resterait ouverte pour un joueur qui ne reviendra pas.
+        if (isOneVersusOne()) {
+            main.getArenaManager().markStranded(id);
+            main.getStatsManager().addLoss(player);
+            main.getStatsManager().save(id);
+            alive.remove(id);
+            teamOf.remove(id);
+            // Pas de message "garde sa place" ici : la partie se termine tout de
+            // suite et l'annonce du vainqueur suffit.
+            checkWin();
+            return;
+        }
+
         // Le lit qu'il transportait (deplacement en cours) repart chez un
         // coequipier ; on le retire de son inventaire pour ne pas le dupliquer.
         if (beds.handleCarrierLost(player)) {
@@ -896,6 +936,12 @@ public class Arena {
      */
     public void start() {
         cancelCountdown();
+        // Securite avant le lancement : si une manche precedente a laisse des
+        // blocs modifies (arret brutal), on remet la map a neuf maintenant.
+        // Le suivi est ensuite remis a zero pour la nouvelle manche.
+        if (main.isMapRegenerationEnabled()) {
+            mapTracker.restore();
+        }
         state = State.PLAYING;
         // Nouvelle manche : on repart d'un suivi de blocs vierge et sans votes.
         mapTracker.clear();
@@ -911,9 +957,12 @@ public class Arena {
 
         // Repartition equilibree : on distribue les joueurs un par un sur les
         // equipes, au lieu de remplir la premiere avant de passer a la suivante.
+        // A 2 ou 3 joueurs sur 4 equipes, l'ordre est choisi pour mettre les
+        // joueurs dans des coins opposes (pas cote a cote).
+        List<String> assignment = assignmentOrder(teams, participants.size());
         for (int i = 0; i < participants.size(); i++) {
             Player player = participants.get(i);
-            String teamName = teams.get(i % teams.size());
+            String teamName = assignment.get(i % assignment.size());
             Location spawn = spawnPoints.get(teamName);
 
             teamOf.put(player.getUniqueId(), teamName);
@@ -937,7 +986,11 @@ public class Arena {
         // Les lits sont poses/restaures a leur emplacement configure une fois
         // les equipes formees (elles conditionnent la couleur des lits).
         beds.start(teams);
-        broadcast(Messages.tr("arena.warn_no_bed"));
+        // Plus besoin de cliquer le lit : chaque joueur est relie d'office au
+        // lit de son equipe des le debut de la manche.
+        for (String team : teams) {
+            beds.bindAll(team);
+        }
 
         // Les NPC de boutique sont poses le temps de la partie seulement.
         spawnShopNpcs();
@@ -952,13 +1005,35 @@ public class Arena {
         applyBorder();
     }
 
+    /**
+     * Ordre de repartition. Avec 4 equipes et seulement 2 joueurs, on saute les
+     * equipes voisines : Rouge (coin sud-ouest) puis Vert (coin nord-est).
+     * Avec 3 joueurs, on garde cet ecart puis on complete par Bleu.
+     */
+    private List<String> assignmentOrder(List<String> teams, int playerCount) {
+        List<String> order = new ArrayList<String>(teams);
+        if (teams.size() == 4 && playerCount == 2) {
+            order.clear();
+            order.add(teams.get(0));
+            order.add(teams.get(3));
+        } else if (teams.size() == 4 && playerCount == 3) {
+            order.clear();
+            order.add(teams.get(0));
+            order.add(teams.get(3));
+            order.add(teams.get(1));
+        }
+        return order;
+    }
+
     private void applyBorder() {
         if (lobby == null || lobby.getWorld() == null) {
             return;
         }
         World world = lobby.getWorld();
         WorldBorder border = world.getWorldBorder();
-        border.setCenter(lobby.getX(), lobby.getZ());
+        Location center = borderCenter != null && borderCenter.getWorld() != null
+                ? borderCenter : lobby;
+        border.setCenter(center.getX(), center.getZ());
         border.setSize(main.getBorderStartSize());
         border.setSize(main.getBorderEndSize(), main.getBorderShrinkTime());
     }
@@ -988,6 +1063,21 @@ public class Arena {
                 : Messages.tr("arena.eliminated_self_reason", "reason", reason)));
         broadcast(Messages.tr("arena.broadcast.eliminated", "player", player.getName()));
         checkWin();
+    }
+
+    /** Vrai si la manche est un duel : exactement 2 joueurs vivants, 2 equipes. */
+    private boolean isOneVersusOne() {
+        if (alive.size() != 2) {
+            return false;
+        }
+        Set<String> teams = new LinkedHashSet<String>();
+        for (UUID id : alive) {
+            String team = teamOf.get(id);
+            if (team != null) {
+                teams.add(team);
+            }
+        }
+        return teams.size() == 2;
     }
 
     /** Termine la partie des qu'il ne reste qu'une equipe, ou aucune. */
@@ -1313,6 +1403,17 @@ public class Arena {
             main.getBedListeners().forgetTnt();
         }
         state = State.WAITING;
+
+        // File d'attente automatique : des qu'une manche se termine, les joueurs
+        // du lobby sont remis dans la file sans commande. Ceux qui ont quitte
+        // volontairement (/aw leave) sont marques "disabled" et ignores.
+        if (main.isAutoQueueEnabled() && main.getAutoQueue() != null) {
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                if (main.getArenaManager().getArenaOf(online) == null) {
+                    main.getAutoQueue().queue(online);
+                }
+            }
+        }
     }
 
     /** Couleur de chat associee a une equipe. */

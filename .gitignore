@@ -1,6 +1,10 @@
 # Build Maven
 /target/
 
+# Serveur de test local (Paper + monde converti + stats) et outils telecharges.
+/server/
+/tools/
+
 # Preferences Eclipse propres a chaque poste.
 /.settings/
 

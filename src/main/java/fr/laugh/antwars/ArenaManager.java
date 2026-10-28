@@ -130,6 +130,16 @@ public class ArenaManager {
             arena.setBorderTime(borderTime);
             arena.setAllowSpectators(allowSpectators);
 
+            // Centre de la bordure de deathmatch, distinct du lobby si besoin.
+            ConfigurationSection borderSection = section.getConfigurationSection("borderCenter");
+            if (borderSection != null) {
+                World borderWorld = Bukkit.getWorld(borderSection.getString("world", "world"));
+                if (borderWorld != null) {
+                    arena.setBorderCenter(new Location(borderWorld,
+                            borderSection.getDouble("x"), 0d, borderSection.getDouble("z")));
+                }
+            }
+
             ConfigurationSection npcSection = section.getConfigurationSection("shopNpcs");
             if (npcSection != null) {
                 for (String npcKey : npcSection.getKeys(false)) {
@@ -253,6 +263,9 @@ public class ArenaManager {
             arenasConfig.set(path + ".allowSpectators", arena.isAllowSpectators());
 
             writeLocation(path + ".lobby", arena.getLobby());
+            if (arena.getBorderCenter() != null) {
+                writeLocation(path + ".borderCenter", arena.getBorderCenter());
+            }
             for (Map.Entry<String, Location> entry : arena.getSpawnPoints().entrySet()) {
                 writeLocation(path + ".spawnPoints." + entry.getKey(), entry.getValue());
             }

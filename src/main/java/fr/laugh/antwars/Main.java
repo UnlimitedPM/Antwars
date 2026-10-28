@@ -6,10 +6,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -22,29 +22,30 @@ import fr.laugh.antwars.compat.Heads;
 import fr.laugh.antwars.compat.MCVersion;
 import fr.laugh.antwars.compat.Proxy;
 import fr.laugh.antwars.config.ArenaNaming;
-import fr.laugh.antwars.game.SpectatorMenu;
-import fr.laugh.antwars.listeners.ChatListeners;
-import fr.laugh.antwars.listeners.SpectatorListeners;
 import fr.laugh.antwars.config.ConfigMenu;
 import fr.laugh.antwars.config.Placements;
 import fr.laugh.antwars.discord.DiscordNotifier;
+import fr.laugh.antwars.game.SpectatorMenu;
 import fr.laugh.antwars.lang.Messages;
 import fr.laugh.antwars.listeners.BedListeners;
 import fr.laugh.antwars.listeners.BlocksListeners;
+import fr.laugh.antwars.listeners.ChatListeners;
+import fr.laugh.antwars.listeners.ConfigListeners;
 import fr.laugh.antwars.listeners.DamageListeners;
 import fr.laugh.antwars.listeners.LobbyListeners;
-import fr.laugh.antwars.listeners.ConfigListeners;
 import fr.laugh.antwars.listeners.MapListeners;
-import fr.laugh.antwars.sign.JoinSignManager;
-import fr.laugh.antwars.listeners.SignListeners;
-import fr.laugh.antwars.listeners.WorldListeners;
 import fr.laugh.antwars.listeners.MenuListeners;
 import fr.laugh.antwars.listeners.NpcListeners;
 import fr.laugh.antwars.listeners.PlayerListeners;
+import fr.laugh.antwars.listeners.SignListeners;
+import fr.laugh.antwars.listeners.SpectatorListeners;
+import fr.laugh.antwars.listeners.WorldListeners;
 import fr.laugh.antwars.quest.QuestManager;
+import fr.laugh.antwars.queue.AutoQueue;
 import fr.laugh.antwars.scoreboard.ScoreboardManager;
 import fr.laugh.antwars.shop.QuickBuyManager;
 import fr.laugh.antwars.shop.ShopMenu;
+import fr.laugh.antwars.sign.JoinSignManager;
 import fr.laugh.antwars.stats.StatsManager;
 
 /**
@@ -74,6 +75,7 @@ public class Main extends JavaPlugin {
     /** bStats : suivi anonyme (nombre de serveurs, versions...). Opt-out cote serveur, pas ici. */
     private Metrics metrics;
     private BedListeners bedListeners;
+    private AutoQueue autoQueue;
     private Proxy proxy;
     private DiscordNotifier discordNotifier;
     private Location serverLobby;
@@ -104,6 +106,8 @@ public class Main extends JavaPlugin {
         discordNotifier = new DiscordNotifier(this);
 
         arenaManager = new ArenaManager(this);
+        autoQueue = new AutoQueue(this);
+        autoQueue.start();
         shopMenu = new ShopMenu(this);
         statsManager = new StatsManager(this);
         questManager = new QuestManager(this);
@@ -185,6 +189,12 @@ public class Main extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Arreter la file avant le reset des arenes : sinon le reset remettrait
+        // les joueurs en attente alors que le plugin s'arrete.
+        if (autoQueue != null) {
+            autoQueue.stop();
+            autoQueue = null;
+        }
         // Sans cela, un rechargement du plugin laisserait des joueurs bloques
         // en mode spectateur, avec une bordure de monde retrecie.
         if (arenaManager != null) {
@@ -218,6 +228,15 @@ public class Main extends JavaPlugin {
 
     public ArenaManager getArenaManager() {
         return arenaManager;
+    }
+
+    /** File d'attente automatique ; {@code null} pendant l'arret du plugin. */
+    public AutoQueue getAutoQueue() {
+        return autoQueue;
+    }
+
+    public boolean isAutoQueueEnabled() {
+        return getConfig().getBoolean("auto-queue.enabled", false);
     }
 
     public ShopMenu getShopMenu() {

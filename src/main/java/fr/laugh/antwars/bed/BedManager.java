@@ -17,6 +17,8 @@ import org.bukkit.inventory.ItemStack;
 
 import fr.laugh.antwars.Arena;
 import fr.laugh.antwars.Main;
+import fr.laugh.antwars.compat.AWMaterial;
+import fr.laugh.antwars.compat.BedColors;
 import fr.laugh.antwars.compat.Beds;
 import fr.laugh.antwars.lang.Messages;
 
@@ -212,11 +214,14 @@ public class BedManager {
 
         BlockState[] snapshot = homeSnapshots.get(team);
         if (snapshot != null) {
-            // Restauration a l'identique. On desactive la physique : sinon la
-            // premiere moitie posee, se retrouvant un instant sans la seconde,
-            // pourrait sauter.
-            snapshot[0].update(true, false);
-            snapshot[1].update(true, false);
+            // Restauration de l'orientation, avec la couleur de l'equipe. Sur
+            // une map convertie depuis la 1.8, le DataFixer a transforme tous
+            // les lits en lits rouges : sans cela, les quatre equipes
+            // partageraient le meme lit. La physique reste desactivee (voir
+            // BedColors) pour ne pas casser une moitie pendant la pose.
+            AWMaterial bedMaterial = Beds.bedOf(team);
+            BedColors.apply(footBlock, snapshot[0], bedMaterial);
+            BedColors.apply(headBlock, snapshot[1], bedMaterial);
         } else {
             // Repli : le bon materiau aux bons blocs, mais sans orientation. Le
             // lit rend mal en 1.13+ (deux pieds accoles) tout en restant
@@ -376,6 +381,11 @@ public class BedManager {
         // Reserve a l'equipe : savoir qu'un lit vient d'etre pose indiquerait
         // a l'adversaire qu'il est temps de partir le chercher.
         arena.broadcastTeam(team, Messages.tr("bed.placed"), null);
+
+        // Le lit a ete deplace : on relie automatiquement toute l'equipe pour
+        // ne pas la punir d'un clic droit oublie. C'est le meme comportement
+        // qu'au lancement de la partie (voir Arena#start).
+        bindAll(team);
     }
 
     /** Equipe dont le lit occupe ce bloc, ou {@code null}. */
@@ -482,6 +492,25 @@ public class BedManager {
 
     public boolean isBound(Player player) {
         return bound.contains(player.getUniqueId());
+    }
+
+    /**
+     * Relie d'office tous les membres connectes d'une equipe a son lit.
+     *
+     * <p>AntWars v1 imposait un clic droit sur le lit ; un joueur qui oubliait
+     * ce geste perdait definitivement a sa premiere mort. On considere
+     * desormais que le lit pose est le lit de l'equipe : la liaison est
+     * automatique au lancement et apres chaque demenagement.
+     */
+    public void bindAll(String team) {
+        if (!isUsable(team)) {
+            return;
+        }
+        for (Player player : arena.onlinePlayers()) {
+            if (team.equals(arena.getTeam(player)) && arena.isAlive(player)) {
+                bound.add(player.getUniqueId());
+            }
+        }
     }
 
     /**

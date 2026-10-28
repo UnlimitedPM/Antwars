@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 
 import fr.laugh.antwars.Arena;
@@ -61,14 +62,33 @@ public class NpcListeners implements Listener {
      */
     @EventHandler(priority = EventPriority.HIGH)
     public void onRightClick(PlayerInteractEntityEvent event) {
-        if (!ShopNpc.isShopNpc(event.getRightClicked())) {
+        openOnRightClick(event.getPlayer(), event.getRightClicked(), event);
+    }
+
+    /**
+     * Certains clics droits sur un armor stand passent par la sous-classe
+     * {@link PlayerInteractAtEntityEvent} sans declencher le handler parent.
+     * On l'ecoute explicitement : c'est le cas qui manquait sur 1.21.
+     */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onRightClickAt(PlayerInteractAtEntityEvent event) {
+        openOnRightClick(event.getPlayer(), event.getRightClicked(), event);
+    }
+
+    /**
+     * Clic droit sur un armor stand avec un item en main : Bukkit le traduit en
+     * manipulation de l'armor stand. On annule le vol d'equipement et on ouvre
+     * la boutique pour que le clic droit marche dans tous les cas.
+     */
+    private void openOnRightClick(Player player, Entity clicked,
+            org.bukkit.event.Cancellable event) {
+        if (!ShopNpc.isShopNpc(clicked)) {
             return;
         }
         event.setCancelled(true);
-        if (debounced(event.getPlayer())) {
-            return;
+        if (!debounced(player)) {
+            openShop(player);
         }
-        openShop(event.getPlayer());
     }
 
     /**
@@ -94,11 +114,9 @@ public class NpcListeners implements Listener {
     }
 
     /** Empeche de retirer la tete ou les habits du NPC (armor stand uniquement). */
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGH)
     public void onManipulate(PlayerArmorStandManipulateEvent event) {
-        if (ShopNpc.isNpc(event.getRightClicked())) {
-            event.setCancelled(true);
-        }
+        openOnRightClick(event.getPlayer(), event.getRightClicked(), event);
     }
 
     /** Vrai si ce joueur vient deja de cliquer il y a moins de {@link #DEBOUNCE_MS}. */

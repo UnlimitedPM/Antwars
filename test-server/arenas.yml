@@ -1,0 +1,414 @@
+# ==========================================================
+#  AntWars - arenes et modes
+# ==========================================================
+# La map contient deux terrains :
+#   - terrain 2 equipes : bases Rouge (-43,156) et Bleu (-124,74) ;
+#   - terrain 4 equipes : Rouge (0,100), Bleu (0,0), Jaune (100,100),
+#                         Vert (100,0).
+#
+# Les noms de modes sont ceux de la commande /aw join :
+#   2x2       = 2 equipes de 2 (max 4 joueurs)
+#   4x4       = 2 equipes de 4 (max 8 joueurs)
+#   2x2x2x2   = 4 equipes de 2 (max 8 joueurs)
+#   4x4x4x4   = 4 equipes de 4 (max 16 joueurs)
+#
+# Le lobby est commun : salle en verre noir au nord-ouest (-143, 50, -46).
+# borderCenter est le centre de la bordure de deathmatch, pas le lobby :
+# il doit rester au centre du terrain utilise.
+
+arenes:
+  '2x2':
+    nom: 2x2
+    minPlayers: 2
+    maxPlayers: 4
+    teamCount: 2
+    playersPerTeam: 2
+    borderTime: 1200
+    allowSpectators: true
+    lobby:
+      world: world
+      x: -142.5
+      y: 50.0
+      z: -45.5
+      yaw: 0.0
+      pitch: 0.0
+    borderCenter:
+      world: world
+      x: -83.5
+      y: 0.0
+      z: 115.5
+    spawnPoints:
+      Rouge:
+        world: world
+        x: -46.0
+        y: 49.0
+        z: 154.0
+        yaw: 0.0
+        pitch: 0.0
+      Bleu:
+        world: world
+        x: -121.0
+        y: 49.0
+        z: 77.0
+        yaw: 0.0
+        pitch: 0.0
+    beds:
+      Rouge:
+        foot:
+          world: world
+          x: -43.0
+          y: 49.0
+          z: 156.0
+        head:
+          world: world
+          x: -43.0
+          y: 49.0
+          z: 157.0
+      Bleu:
+        foot:
+          world: world
+          x: -124.0
+          y: 49.0
+          z: 75.0
+        head:
+          world: world
+          x: -124.0
+          y: 49.0
+          z: 74.0
+    shopNpcs:
+      0:
+        world: world
+        x: -48.0
+        y: 49.0
+        z: 154.0
+        yaw: 0.0
+        pitch: 0.0
+      1:
+        world: world
+        x: -121.0
+        y: 49.0
+        z: 74.0
+        yaw: 0.0
+        pitch: 0.0
+
+  '4x4':
+    nom: 4x4
+    minPlayers: 2
+    maxPlayers: 8
+    teamCount: 2
+    playersPerTeam: 4
+    borderTime: 1200
+    allowSpectators: true
+    lobby:
+      world: world
+      x: -142.5
+      y: 50.0
+      z: -45.5
+      yaw: 0.0
+      pitch: 0.0
+    borderCenter:
+      world: world
+      x: -83.5
+      y: 0.0
+      z: 115.5
+    spawnPoints:
+      Rouge:
+        world: world
+        x: -46.0
+        y: 49.0
+        z: 154.0
+        yaw: 0.0
+        pitch: 0.0
+      Bleu:
+        world: world
+        x: -121.0
+        y: 49.0
+        z: 77.0
+        yaw: 0.0
+        pitch: 0.0
+    beds:
+      Rouge:
+        foot:
+          world: world
+          x: -43.0
+          y: 49.0
+          z: 156.0
+        head:
+          world: world
+          x: -43.0
+          y: 49.0
+          z: 157.0
+      Bleu:
+        foot:
+          world: world
+          x: -124.0
+          y: 49.0
+          z: 75.0
+        head:
+          world: world
+          x: -124.0
+          y: 49.0
+          z: 74.0
+    shopNpcs:
+      0:
+        world: world
+        x: -48.0
+        y: 49.0
+        z: 154.0
+        yaw: 0.0
+        pitch: 0.0
+      1:
+        world: world
+        x: -121.0
+        y: 49.0
+        z: 74.0
+        yaw: 0.0
+        pitch: 0.0
+
+  '2x2x2x2':
+    nom: 2x2x2x2
+    minPlayers: 4
+    maxPlayers: 8
+    teamCount: 4
+    playersPerTeam: 2
+    borderTime: 1200
+    allowSpectators: true
+    lobby:
+      world: world
+      x: -142.5
+      y: 50.0
+      z: -45.5
+      yaw: 0.0
+      pitch: 0.0
+    borderCenter:
+      world: world
+      x: 50.5
+      y: 0.0
+      z: 50.5
+    spawnPoints:
+      Rouge:
+        world: world
+        x: 1.5
+        y: 50.0
+        z: 99.5
+        yaw: 0.0
+        pitch: 0.0
+      Bleu:
+        world: world
+        x: 1.5
+        y: 50.0
+        z: 1.5
+        yaw: 0.0
+        pitch: 0.0
+      Jaune:
+        world: world
+        x: 100.5
+        y: 50.0
+        z: 98.5
+        yaw: 0.0
+        pitch: 0.0
+      Vert:
+        world: world
+        x: 98.5
+        y: 50.0
+        z: 0.5
+        yaw: 0.0
+        pitch: 0.0
+    beds:
+      Rouge:
+        foot:
+          world: world
+          x: 1.0
+          y: 50.0
+          z: 100.0
+        head:
+          world: world
+          x: 0.0
+          y: 50.0
+          z: 100.0
+      Bleu:
+        foot:
+          world: world
+          x: 0.0
+          y: 50.0
+          z: 1.0
+        head:
+          world: world
+          x: 0.0
+          y: 50.0
+          z: 0.0
+      Jaune:
+        foot:
+          world: world
+          x: 100.0
+          y: 50.0
+          z: 99.0
+        head:
+          world: world
+          x: 100.0
+          y: 50.0
+          z: 100.0
+      Vert:
+        foot:
+          world: world
+          x: 99.0
+          y: 50.0
+          z: 0.0
+        head:
+          world: world
+          x: 100.0
+          y: 50.0
+          z: 0.0
+    shopNpcs:
+      0:
+        world: world
+        x: 2.5
+        y: 50.0
+        z: 100.5
+        yaw: 0.0
+        pitch: 0.0
+      1:
+        world: world
+        x: 2.5
+        y: 50.0
+        z: 0.5
+        yaw: 0.0
+        pitch: 0.0
+      2:
+        world: world
+        x: 98.5
+        y: 50.0
+        z: 100.5
+        yaw: 0.0
+        pitch: 0.0
+      3:
+        world: world
+        x: 98.5
+        y: 50.0
+        z: 0.5
+        yaw: 0.0
+        pitch: 0.0
+
+  '4x4x4x4':
+    nom: 4x4x4x4
+    minPlayers: 4
+    maxPlayers: 16
+    teamCount: 4
+    playersPerTeam: 4
+    borderTime: 1200
+    allowSpectators: true
+    lobby:
+      world: world
+      x: -142.5
+      y: 50.0
+      z: -45.5
+      yaw: 0.0
+      pitch: 0.0
+    borderCenter:
+      world: world
+      x: 50.5
+      y: 0.0
+      z: 50.5
+    spawnPoints:
+      Rouge:
+        world: world
+        x: 1.5
+        y: 50.0
+        z: 99.5
+        yaw: 0.0
+        pitch: 0.0
+      Bleu:
+        world: world
+        x: 1.5
+        y: 50.0
+        z: 1.5
+        yaw: 0.0
+        pitch: 0.0
+      Jaune:
+        world: world
+        x: 100.5
+        y: 50.0
+        z: 98.5
+        yaw: 0.0
+        pitch: 0.0
+      Vert:
+        world: world
+        x: 98.5
+        y: 50.0
+        z: 0.5
+        yaw: 0.0
+        pitch: 0.0
+    beds:
+      Rouge:
+        foot:
+          world: world
+          x: 1.0
+          y: 50.0
+          z: 100.0
+        head:
+          world: world
+          x: 0.0
+          y: 50.0
+          z: 100.0
+      Bleu:
+        foot:
+          world: world
+          x: 0.0
+          y: 50.0
+          z: 1.0
+        head:
+          world: world
+          x: 0.0
+          y: 50.0
+          z: 0.0
+      Jaune:
+        foot:
+          world: world
+          x: 100.0
+          y: 50.0
+          z: 99.0
+        head:
+          world: world
+          x: 100.0
+          y: 50.0
+          z: 100.0
+      Vert:
+        foot:
+          world: world
+          x: 99.0
+          y: 50.0
+          z: 0.0
+        head:
+          world: world
+          x: 100.0
+          y: 50.0
+          z: 0.0
+    shopNpcs:
+      0:
+        world: world
+        x: 2.5
+        y: 50.0
+        z: 100.5
+        yaw: 0.0
+        pitch: 0.0
+      1:
+        world: world
+        x: 2.5
+        y: 50.0
+        z: 0.5
+        yaw: 0.0
+        pitch: 0.0
+      2:
+        world: world
+        x: 98.5
+        y: 50.0
+        z: 100.5
+        yaw: 0.0
+        pitch: 0.0
+      3:
+        world: world
+        x: 98.5
+        y: 50.0
+        z: 0.5
+        yaw: 0.0
+        pitch: 0.0

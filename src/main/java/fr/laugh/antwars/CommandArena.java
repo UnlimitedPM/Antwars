@@ -131,6 +131,9 @@ public class CommandArena implements CommandExecutor, TabCompleter {
                 send(player, Messages.tr("command.not_in_arena"));
             } else {
                 current.leave(player, true);
+                if (main.getAutoQueue() != null) {
+                    main.getAutoQueue().disable(player);
+                }
                 send(player, Messages.tr("command.left_arena", "arena", current.getName()));
             }
             return true;
@@ -408,6 +411,10 @@ public class CommandArena implements CommandExecutor, TabCompleter {
         if (current != null) {
             send(player, Messages.tr("command.already_in_arena", "arena", current.getName()));
             return;
+        }
+        if (main.getAutoQueue() != null) {
+            main.getAutoQueue().enable(player);
+            main.getAutoQueue().remove(player);
         }
         String problem = arena.join(player);
         if (problem != null) {

@@ -46,6 +46,21 @@ arena-mode:
   enabled: false
   arena: ''
 
+# File d'attente automatique (serveur de jeu sans HUB).
+#   enabled : true = tout joueur qui se connecte est place dans la file de la
+#             premiere arene disponible, sans taper /aw join. S'il y a deja une
+#             partie, il attend au lobby et rejoint automatiquement a la fin.
+#   arenas  : arenes essayees dans l'ordre. La premiere qui a une place gagne.
+#             Les modes fournis par la map sont : 2x2, 4x4, 2x2x2x2, 4x4x4x4.
+# Un joueur qui fait /aw leave n'est pas remis d'office dans la file.
+auto-queue:
+  enabled: false
+  arenas:
+    - 2x2
+    - 2x2x2x2
+    - 4x4x4x4
+    - 4x4
+
 # NPC de boutique : pose avec /aw shopnpc <arene> (ou par le menu de config), il
 # ouvre la boutique comme la pancarte [Boutique].
 #
@@ -155,8 +170,9 @@ map-regeneration: true
 
 # Bordure du monde appliquee au deathmatch.
 border:
-  # Taille initiale en blocs.
-  start-size: 100
+  # Taille initiale en blocs. 180 couvre les deux terrains de la map :
+  # le 4 equipes (100x100) et le 2 equipes (bases a ~115 blocs).
+  start-size: 180
   # Taille finale en blocs.
   end-size: 20
   # Duree du retrecissement, en secondes.

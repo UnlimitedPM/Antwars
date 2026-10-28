@@ -68,6 +68,26 @@ public class PlayerListeners implements Listener {
             return;
         }
 
+        // File d'attente automatique : le joueur est au spawn du serveur et
+        // rejoint tout seul l'arene des qu'une place est libre. C'est le mode
+        // par defaut du serveur de jeu (pas besoin de /aw join).
+        if (main.isAutoQueueEnabled()) {
+            Location lobby = main.getServerLobby();
+            if (lobby != null && lobby.getWorld() != null) {
+                Compat.resetPlayer(player, GameMode.ADVENTURE);
+                player.teleport(lobby);
+            }
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (player.isOnline() && main.getAutoQueue() != null) {
+                        main.getAutoQueue().queue(player);
+                    }
+                }
+            }.runTaskLater(main, 1L);
+            return;
+        }
+
         // Comportement normal : les joueurs ne sont pas ajoutes d'office a une
         // partie, ils entrent par /aw join.
         if (!main.getConfig().getBoolean("lobby-on-join", true)) {
@@ -144,6 +164,9 @@ public class PlayerListeners implements Listener {
                 Compat.resetPlayer(player, GameMode.ADVENTURE);
                 player.sendMessage(Main.PREFIX + Messages.tr("player.reconnect_lost"));
                 main.returnToLobby(player);
+                if (main.isAutoQueueEnabled() && main.getAutoQueue() != null) {
+                    main.getAutoQueue().queue(player);
+                }
             }
         }.runTaskLater(main, 1L);
     }
@@ -164,6 +187,9 @@ public class PlayerListeners implements Listener {
                 // Pas de teleportation : le joueur est deja parti.
                 arena.leave(player, false);
             }
+        }
+        if (main.getAutoQueue() != null) {
+            main.getAutoQueue().onQuit(player);
         }
         main.getStatsManager().unload(player);
         main.getQuestManager().unload(player);
